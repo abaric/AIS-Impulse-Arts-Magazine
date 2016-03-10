@@ -1,0 +1,60 @@
+{{extend 'layout.html'}}
+<body>
+
+{{=writing_form}}
+<br>
+<table width='100%'>
+    {{for writing in writings:}}
+    <tr> 
+        <td><h5><center><b><i><u>{{=writing.title.title()}}</u></i></b></center></h5></td>
+    </tr>
+    
+	<tr>  
+        <td><center><pre>{{=writing.body}}</pre></center></td>
+    </tr>
+    
+    {{if len(d[writing.id]):}}
+        <tr>
+        <td>
+        	<table width='100%'>
+            {{for t in d[writing.id]:}}
+                        <tr>
+                            <td><center><b>{{=("%s says, '%s'")%(t[0],t[1])}}</b></center></td>
+                        </tr>
+            {{pass}}
+    		</table>
+               	
+            <table width='100%'>
+               			<tr>
+          					<form enctype="multipart/form-data" action="{{=URL('insert_writing_comment',args=(writing.id))}}" method="post"> 
+                                <td style="wbite-space:nowrap" cellspan=2><center><input name="writing_comment" type="text">
+                        <input formmethod="post" name="commentform" type="submit" width="150"></center></td>
+          					</form>
+                    	</tr>
+            </table>
+        
+     {{else:}}    
+            <tr>
+            <td>
+              <table width='95%'>
+                  <tr><td><center><h4>Be the first to post a comment!</h4></center></td></tr>
+                  <tr>
+                    <form enctype="multipart/form-data" action="{{=URL('insert_writing_comment',args=(writing.id))}}" method="post"> 
+                        <td style="white-space:nowrap" cellspan=2><center><input name="writing_comment" type="text">
+                        <input formmethod="post" name="commentform" type="submit" width="150"></center>
+                        </td>
+                    </form>
+                 </tr>
+                                   
+              </table>
+           </td>
+           </tr>          	
+            	      	   	
+        </td>
+        </tr>
+
+     {{pass}}
+{{pass}} 
+    
+</table>
+</body>

@@ -1,0 +1,152 @@
+from gluon.tools import datetime
+from gluon.tools import Auth
+        
+@auth.requires_login()
+
+def user():
+    return dict(form=auth())
+    
+#def load_roles():
+ #  session.user_name=auth.user.first_name
+  # session.roles=[]
+   #     
+    #    if auth.has_membership('teacher'):
+     #       session.user_teacher_id=db(db.teacher.email==auth.user.email).select().first().id
+      #      t=('teacher','load_courses',session.user_teacher_id)
+       #     session.roles.append(t)
+        #    
+        #if auth.has_membership('advisor'):
+          #  session.user_advisor_id=db(db.advisor.email==auth.user.email).select().first().id
+           # a=('advisor','load_advisees',session.user_advisor_id)
+            #session.roles.append(a)
+            #
+        #if auth.has_membership('division_level'):
+         #   session.user_division_level_id=db(db.division_level.email==auth.user.email).select().first().id
+          #  divl=('division level','load_departments',session.user_division_level_id)
+           # session.roles.append(divl)
+                                      
+def index():
+    return locals()
+
+def download():
+    return response.download(request, db)
+
+def show_image_comments():
+    image_form=SQLFORM(db.image,fields=['title','file'],labels={'file':'Your Image'})
+    image_form.vars.author_id=auth.user.id
+    if image_form.process().accepted:
+        response.flash='image submitted!'
+    images=db(db.image).select(db.image.ALL, orderby=db.image.id)
+    d={}
+    for image in images:
+        comments=db((db.image_comment.image_id==image.id) &\
+                   (db.auth_user.id==db.image_comment.author_id)).select() 
+        tuple_list=[]       
+        for comment in comments:
+            author=('%s %s')%(comment.auth_user.first_name,comment.auth_user.last_name)
+            body=('%s')%(comment.image_comment.body)
+            t=(author,body)
+            tuple_list.append(t)
+        d[image.id]=tuple_list
+  
+    form = SQLFORM(db.writing_comment)
+    if form.process().accepted:
+        response.flash = 'your comment is posted'
+    #images = db(db.image_comment.image_id==image.id).select()
+    return locals()
+    
+def show_writing_comments():
+    writing_form=SQLFORM(db.writing,fields=['title','post'],labels={'title':'post'})
+    writing_form.vars.author_id=auth.user.id
+    if writing_form.process().accepted:
+        response.flash='writing post submitted!'
+    images=db(db.image).select(db.image.ALL, orderby=db.image.id)
+   
+    d={}
+    for writing in writings:
+        comments=db((db.writing_comment.writing_id==writing.id) &\
+                   (db.auth_user.id==db.writing_comment.author_id)).select() 
+        tuple_list=[]       
+        for comment in comments:
+            author=('%s %s')%(comment.auth_user.first_name,comment.auth_user.last_name)
+            body=('%s')%(comment.writing_comment.body)
+            t=(author,body)
+            tuple_list.append(t)
+        d[writing.id]=tuple_list
+  
+    form = SQLFORM(db.writing_comment)
+    if form.process().accepted:
+        response.flash = 'your comment is posted'
+    #comments = db(db.writing_comment.writing_id==writing.id).select()
+    return locals()
+
+def show_video_comments():
+    video = db.video(request.args(0))
+    videos=db().select(db.video.ALL, orderby=db.video.id)
+    video_comment=db.video_comment(request.args(0))
+    d={}
+    for video in videos:
+        comments=db((db.video_comment.video_id==video.id) &\
+                   (db.auth_user.id==db.video_comment.author_id)).select() 
+        tuple_list=[]       
+        for comment in comments:
+            author=('%s %s')%(comment.auth_user.first_name,comment.auth_user.last_name)
+            body=('%s')%(comment.video_comment.body)
+            t=(author,body)
+            tuple_list.append(t)
+        d[video.id]=tuple_list
+    form = SQLFORM(db.video_comment)
+    if form.process().accepted:
+        response.flash = 'your comment is posted'
+    return locals()  
+
+def insert_writing_comment():
+    if auth.user:
+        writing_comment=request.post_vars.writing_comment
+       # db.writing_comment.insert(video_id=video_id,video_comment_id=video_comment_id, author_id=author_id,email=email,body=body)
+        writing_id=request.args(0)
+        db.writing_comment.insert(author_id=auth.user.id,
+                                  writing_id=writing_id,
+                                  email=None,
+                                  body=writing_comment,
+                                  date_of_entry=datetime.datetime.today())
+        db.commit()
+       
+    else:
+        session.flash='You must log in to post a comment.'
+    redirect(URL('show_writing_comments'))
+    return locals()
+
+
+def insert_image_comment():
+    if auth.user:
+        image_comment=request.post_vars.image_comment
+       # db.writing_comment.insert(video_id=video_id,video_comment_id=video_comment_id, author_id=author_id,email=email,body=body)
+        image_id=request.args(0)
+        db.image_comment.insert(author_id=auth.user.id,
+                                  image_id=image_id,
+                                  email=None,
+                                  body=image_comment,
+                                  date_of_entry=datetime.datetime.today())
+        db.commit()
+       
+    else:
+        session.flash='You must log in to post a comment.'
+    redirect(URL('show_image_comments'))
+    return locals()
+    
+def insert_video_comment():
+    if auth.user:
+        video_comment=request.post_vars.video_comment
+        video_id=request.args(0)
+        db.video_comment.insert(author_id=auth.user.id,
+                                  video_id=video_id,
+                                  email=None,
+                                  body=video_comment,
+                                  date_of_entry=datetime.datetime.today())
+        db.commit()
+       
+    else:
+        session.flash='You must log in to post a comment.'
+    redirect(URL('show_video_comments'))
+    return locals()
